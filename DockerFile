@@ -1,6 +1,6 @@
 FROM node:10.15.0-alpine
 
-LABEL maintainer="TALHA AHMED"
+LABEL maintainer="Syed Fahad Saeed"
 
 RUN apk update && apk add openssh vim bash
 
