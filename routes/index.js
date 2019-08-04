@@ -31,6 +31,9 @@ router.get('/', function (req, res, next) {
 
 //   });
 // });
+
+
+
 router.get('/student', function (req, res) {
 
 
@@ -51,6 +54,436 @@ router.get('/student', function (req, res) {
 
 
 });
+router.post('/teacher/departments',
+  [
+
+    
+    check('teacher_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the teacher_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = `select distinct d.* from course_teacher_session cts
+    inner join course_program cp on cts.course_id = cp.course_id
+    inner join program p on cp.program_id = p.id
+    inner join department d on p.department_id = d.id
+    inner join session s on cts.session_id = s.id
+    where cts.teacher_id = ? and s.is_active = 1`;
+    con.query(sql, [req.body.teacher_id], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        res.json({ "departments": result, "message": "1" })
+      }
+      else {
+        res.json({ "departments": null, "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+
+  router.post('/teacher/programs',
+  [
+
+    
+    check('teacher_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the teacher_id').isLength({min:1}),
+    check('department_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the department_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = `select distinct p.* from course_teacher_session cts
+    inner join course_program cp on cts.course_id = cp.course_id
+    inner join program p on cp.program_id = p.id
+    inner join session s on cts.session_id = s.id
+    where cts.teacher_id = ? and p.department_id = ? and s.is_active = 1`;
+    con.query(sql, [req.body.teacher_id,req.body.department_id], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        res.json({ "programs": result, "message": "1" })
+      }
+      else {
+        res.json({ "programs": null, "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+  router.post('/teacher/batches',
+  [
+
+    
+    check('teacher_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the teacher_id').isLength({min:1}),
+    check('program_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the program_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = `select distinct b.*
+    from session s
+    inner join course_teacher_session cts on s.id = cts.session_id
+    inner join batch b on s.batch_id = b.id
+    where cts.teacher_id = ? and s.program_id = ? and s.is_active = 1`;
+    con.query(sql, [req.body.teacher_id,req.body.program_id], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        res.json({ "batches": result, "message": "1" })
+      }
+      else {
+        res.json({ "batches": null, "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+
+  router.post('/teacher/sections',
+  [
+
+    
+    check('teacher_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the teacher_id').isLength({min:1}),
+    check('program_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the program_id').isLength({min:1}),
+    check('batch_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the batch_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = `select distinct sec.*
+    from session s
+    inner join course_teacher_session cts on s.id = cts.session_id
+    inner join section sec on s.section_id = sec.id
+    where cts.teacher_id = ? and s.program_id = ? and s.batch_id = ? and s.is_active = 1
+    order by sec.id asc`;
+    con.query(sql, [req.body.teacher_id,req.body.program_id,req.body.batch_id], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        res.json({ "sections": result, "message": "1" })
+      }
+      else {
+        res.json({ "sections": null, "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+  router.post('/teacher/courses',
+  [
+
+    
+    check('teacher_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the teacher_id').isLength({min:1}),
+    check('program_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the program_id').isLength({min:1}),
+    check('batch_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the batch_id').isLength({min:1}),
+    check('section_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the section_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = `select id as session_id
+    from session
+    where program_id = ? and batch_id = ? and section_id = ? and is_active = 1
+    order by year desc, semester asc 
+    limit 1  `;
+    con.query(sql, [req.body.program_id,req.body.batch_id,req.body.section_id], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        // res.json({ "batches": result, "message": "1" })
+        let sql2=`select c.id,c.course_name 
+        from course c
+        inner join course_teacher_session cts on c.id = cts.course_id
+        inner join course_program cp on c.id = cp.course_id
+        where cts.teacher_id = ? and cp.program_id = ? and cts.session_id = ?`
+        con.query(sql2,[req.body.teacher_id,req.body.program_id,result[0].session_id],(err,result)=>{
+            res.json({ "courses": result, "message": "1" })
+        })
+      }
+      else {
+        res.json({ "courses": null, "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+
+
+  router.post('/teacher/startattendance',
+  [
+
+    
+    check('teacher_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the teacher_id').isLength({min:1}),
+    check('program_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the program_id').isLength({min:1}),
+    check('batch_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the batch_id').isLength({min:1}),
+    check('section_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the section_id').isLength({min:1}),
+    check('course_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the course_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    
+    let sql = `
+INSERT INTO attendance_main (
+    attendance_date,
+    attendance_time,
+    status,
+    latitude,
+    longitude,
+    distance,
+    course_id,
+    session_id,
+    teacher_id
+)
+
+SELECT 
+    '${req.body.attendance_date}',
+   '${req.body.attendance_time}',
+    0,
+    ${req.body.latitude},
+    ${req.body.longitude},
+    ${req.body.distance},
+    ${req.body.course_id},
+    id,
+    ${req.body.teacher_id}
+	from session
+    where program_id = ${req.body.program_id} and batch_id = ${req.body.batch_id} and section_id = ${req.body.section_id} and is_active = 1
+    order by year desc, semester asc 
+    limit 1`;
+console.log(sql);
+    con.query(sql, (err, result) => {
+      // console.log(req.body)
+        // console.log(result)
+        // res.json({ "batches": result, "message": "1" })
+        let sql2=`INSERT INTO attendance_student (
+          attendance_id,
+          isPresent,
+          student_id
+      )
+      SELECT 
+          ?,
+          0,
+          css.student_id
+      FROM 
+          course_student_session css
+      inner join students st on css.student_id = st.id
+      WHERE 
+          css.course_id = ? and st.program_id = ? and st.section_id = ? and st.batch_id = ?`
+          var attendance_id =result.insertId;
+        con.query(sql2,[result.insertId,req.body.course_id,req.body.program_id,req.body.section_id,req.body.batch_id],(err,result)=>{
+            if(result){
+              con.query("select * from course where id =?",[req.body.course_id],(errors,resultmain)=>{
+                res.json({ "attendance_id":attendance_id,"course":resultmain, "message": "1" })
+              })
+              
+            }
+            else{
+              res.json({ "message": "0" })
+            }
+            
+        })
+      
+
+    })
+
+
+
+
+
+  });
+
+  router.get('/teacher/getattendance', (req, res) => {
+
+    
+    let sql = `select st.id,st.student_name,st.roll_num,atu.isPresent
+    from attendance_student atu
+    inner join students st on st.id = atu.student_id
+    where atu.attendance_id = ?`;
+    con.query(sql, [req.query.id], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        res.json({ "students": result, "message": "1" })
+      }
+      else {
+        res.json({ "students": null, "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+  router.get('/teacher/unsavedattendance', (req, res) => {
+
+    
+    let sql = `select am.id as attendance_id,am.attendance_date as attendance_date ,c.course_name as course_name from attendance_main am
+    inner join course c on am.course_id=c.id
+    where am.teacher_id = ? and am.status = 0`;
+    con.query(sql, [req.query.id], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        res.json({ "attendances": result, "message": "1" })
+      }
+      else {
+        res.json({ "attendances": null, "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+  router.post('/teacher/closeattendance',
+  [
+
+    
+    check('attendance_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the attendance_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = `update attendance_main set status = 1 where id = ?`;
+    con.query(sql, [req.body.attendance_id], (err, result) => {
+      if (result) {
+        // console.log(result)
+        res.json({  "message": "1" })
+      }
+      else {
+        res.json({  "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+
+  router.post('/teacher/markattendance',
+  [
+
+    
+    check('student_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the student_id').isLength({min:1}),
+    check('attendance_id').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the attendance_id').isLength({min:1})
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = `UPDATE attendance_student SET isPresent = IF (isPresent, 0, 1)  where student_id = ? and attendance_id = ?`;
+    con.query(sql, [req.body.student_id,req.body.attendance_id], (err, result) => {
+      if (result) {
+        // console.log(result)
+        res.json({  "message": "1" })
+      }
+      else {
+        res.json({  "message":"0" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+  router.post('/teacher/login',
+  [
+
+    check('email').custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed in the email').isLength({min:1}),
+
+    check('password').isLength({ min: 1 })
+  ], (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let sql = "select * from teachers where email=? and password=?";
+    con.query(sql, [req.body.email.trim(), req.body.password.trim()], (err, result) => {
+      if (result.length != 0) {
+        // console.log(result)
+        res.json({ "teacher": result, "message": "success" })
+      }
+      else {
+        res.json({ "teacher": null, "message": "email or password incorrect" })
+      }
+      // console.log(result);
+
+    })
+
+
+
+
+
+  });
+  
 router.post('/student/login',
   [
 
@@ -82,6 +515,7 @@ router.post('/student/login',
 
 
   });
+
   router.post('/student/currentcourses',
   [
 
