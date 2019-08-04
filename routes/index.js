@@ -670,7 +670,7 @@ router.post('/student/login',
     let sql = `select am.attendance_date as dated ,am.attendance_time , latitude,am.id as attendance_id, am.status , longitude , am.distance ,c.course_name , t.teacher_name from attendance_main am
     join course c on c.id = am.course_id
     join teachers t on t.id =  am.teacher_id
-    where am.id = ? and am.status = 1`;
+    where am.id = ? and am.status = 0`;
     var sql2 = `update attendance_student set isPresent = 1 where student_id = ? and attendance_id=?`
     con.query(sql, [req.body.attendance_id], (err, result) => {
       if (result.length != 0) {
